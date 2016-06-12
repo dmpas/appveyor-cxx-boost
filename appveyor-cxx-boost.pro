@@ -11,5 +11,5 @@ SOURCES += main.cpp
 LIBS += -lboost_filesystem -lboost_system
 
 win32:INCLUDEPATH += "C:/Libraries/boost/"
-win32:LIBS += "-LC:/Libraries/boost/stage/lib"
+win32:LIBS += "-LC:/Libraries/boost/lib32-msvc-12.0"
 
