@@ -10,7 +10,7 @@ build_script:
 
     cmake -G "Visual Studio 12" -DBOOST_ROOT="%BOOST_ROOT%" -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR%" -DBOOST_INCLUDEDIR="%BOOST_INCLUDEDIR%" .
 
-    msbuild AppveyorTest.sln
+    cmake --build . --config Release
 artifacts:
-- path: bin\Release\*.exe
+- path: Release\*.exe
   name: Appveyor-test
