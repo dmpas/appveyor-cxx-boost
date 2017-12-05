@@ -1,14 +1,87 @@
 version: 1.0.{build}
 environment:
-  VCDIR: C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\
-  BOOST_ROOT: C:\Libraries\boost
-  BOOST_INCLUDEDIR: C:\Libraries\boost
-  BOOST_LIBRARYDIR: C:\Libraries\boost\lib32-msvc-12.0
+  # NOT (!) BOOST_ROOT, NOT BOOST_INCLUDEDIR, NOT BOOST_LIBRARYDIR - appveyor can redefine them
+  MY_BOOST_ROOT: C:\projects\boost
+  MY_BOOST_INCLUDEDIR: C:\projects\boost
+  MY_BOOST_LIBRARYDIR: C:\projects\boost\stage\lib
+  matrix:
+    - ID: minw32-x86-boost1.63
+      GENERATOR: MSYS Makefiles
+      BOOST_VERSION: 1_63_0
+      BOOST_DOT_VERSION: 1.63.0
+      ADD_PATH: C:\MinGW\bin;C:\MinGW\msys\1.0\bin
+      # NOT "TOOLSET" - bootstrap redefines "toolset" variable
+      BOOST_TOOLSET: gcc
+      ALLOW_FAILURE: no
+
+    - ID: minw64-x64-boost1.63
+      GENERATOR: MSYS Makefiles
+      BOOST_VERSION: 1_63_0
+      BOOST_DOT_VERSION: 1.63.0
+      ADD_PATH: C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64\bin;c:\msys64\mingw32\bin;c:\msys64\usr\bin
+      BOOST_TOOLSET: gcc
+      ALLOW_FAILURE: yes
+
+    - ID: vs12.0-x86-boost1.63
+      GENERATOR: Visual Studio 12
+      BOOST_VERSION: 1_63_0
+      BOOST_DOT_VERSION: 1.63.0
+      VCDIR: C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\
+      ADD_PATH:
+      BOOST_TOOLSET: msvc-12.0
+      ALLOW_FAILURE: yes
+
+    - ID: vs14.0-x86-boost1.63
+      GENERATOR: Visual Studio 14
+      BOOST_VERSION: 1_63_0
+      BOOST_DOT_VERSION: 1.63.0
+      VCDIR: C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\
+      ADD_PATH:
+      BOOST_TOOLSET: msvc-14.0
+      ALLOW_FAILURE: no
+
+    - ID: vs14.0-x86-boost1.65
+      GENERATOR: Visual Studio 14
+      BOOST_VERSION: 1_65_0
+      BOOST_DOT_VERSION: 1.65.0
+      VCDIR: C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\
+      ADD_PATH:
+      BOOST_TOOLSET: msvc-14.0
+      ALLOW_FAILURE: yes
+
+matrix:
+  allow_failures:
+    - ALLOW_FAILURE: yes
+init:
+# Build BOOST Part
+- cmd: >-
+    set PATH=%PATH%;%ADD_PATH%
+
+    cd ..
+
+    curl -o boost.7z -L 
+    https://sourceforge.net/projects/boost/files/boost/%BOOST_DOT_VERSION%/boost_%BOOST_VERSION%.7z/download
+
+    7z x boost.7z
+
+    rename boost_%BOOST_VERSION% boost
+
+    cd boost
+
+    .\bootstrap.bat
+
+    .\b2.exe toolset=%BOOST_TOOLSET% --with-system --with-filesystem --with-regex --with-program_options
+
+    cd %APPVEYOR_BUILD_FOLDER%
+
+before_build:
+- cmd: >-
+
 build_script:
 - cmd: >-
     "%VCDIR%"\vcvarsall.bat
 
-    cmake -G "Visual Studio 12" -DBOOST_ROOT="%BOOST_ROOT%" -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR%" -DBOOST_INCLUDEDIR="%BOOST_INCLUDEDIR%" .
+    cmake -G "%GENERATOR%" -DBOOST_ROOT="%MY_BOOST_ROOT%" -DBOOST_LIBRARYDIR="%MY_BOOST_LIBRARYDIR%" -DBOOST_INCLUDEDIR="%MY_BOOST_INCLUDEDIR%" .
 
     cmake --build . --config Release
 artifacts:
